@@ -8,13 +8,19 @@
 
 import UIKit
 
-class TodoTableViewController: UITableViewController {
+class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     
-    let itemsArray = ["Travel","Shopping", "Grocery"]
+    var itemsArray = ["Travel","Shopping", "Grocery"]
+    var newItem = String()
+    
+    var defaults = UserDefaults.standard
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.add, target: self, action: #selector(addButtonPressed))
+        if let items = defaults.array(forKey: "ToDoListKey") as? [String] {
+        itemsArray = items
+        }
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
 
@@ -22,13 +28,24 @@ class TodoTableViewController: UITableViewController {
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
     }
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        let alertController = UIAlertController(title: "Add Todoey Item", message: "", preferredStyle: .alert)
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            self.itemsArray.append(self.newItem)
+            self.defaults.setValue(self.itemsArray, forKey: "ToDoListKey")
+            self.tableView.reloadData()
+        }
+        alertController.addAction(action)
+        alertController.addTextField { (textField) in
+            self.newItem = textField.text!
+            textField.placeholder = "Enter New Item"
+            textField.delegate = self
+        }
+        self.present(alertController, animated: true, completion: nil)
     }
-
-    @objc func addButtonPressed() {
-
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        newItem = textField.text!
     }
     // MARK: - Table view data source
 
@@ -60,6 +77,7 @@ class TodoTableViewController: UITableViewController {
             tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
         }
     }
+    
     /*
     // Override to support conditional editing of the table view.
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
