@@ -10,15 +10,60 @@ import UIKit
 
 class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     
-    var itemsArray = ["Travel","Shopping", "Grocery"]
-    var newItem = String()
+    var itemsArray = [ItemModel]()
+    var newItem = ItemModel()
     
     var defaults = UserDefaults.standard
     
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let items = defaults.array(forKey: "ToDoListKey") as? [String] {
+        
+        let item1 = ItemModel(name: "First", checked: false)
+        let item2 = ItemModel(name: "First", checked: false)
+        let item3 = ItemModel(name: "First", checked: false)
+        let item4 = ItemModel(name: "First", checked: false)
+        let item5 = ItemModel(name: "First", checked: false)
+        let item6 = ItemModel(name: "First", checked: false)
+        let item7 = ItemModel(name: "First", checked: false)
+        let item8 = ItemModel(name: "First", checked: false)
+        let item9 = ItemModel(name: "First", checked: false)
+        let item10 = ItemModel(name: "First", checked: false)
+        let item11 = ItemModel(name: "First", checked: false)
+        let item12 = ItemModel(name: "First", checked: false)
+        let item13 = ItemModel(name: "First", checked: false)
+        let item14 = ItemModel(name: "First", checked: false)
+        let item15 = ItemModel(name: "First", checked: false)
+        let item16 = ItemModel(name: "First", checked: false)
+        let item17 = ItemModel(name: "First", checked: false)
+        let item18 = ItemModel(name: "First", checked: false)
+        let item19 = ItemModel(name: "First", checked: false)
+        let item20 = ItemModel(name: "First", checked: false)
+        let item21 = ItemModel(name: "First", checked: false)
+        itemsArray.append(item1)
+        itemsArray.append(item2)
+        itemsArray.append(item3)
+        itemsArray.append(item4)
+        itemsArray.append(item5)
+        itemsArray.append(item6)
+        itemsArray.append(item7)
+        itemsArray.append(item8)
+        itemsArray.append(item9)
+        itemsArray.append(item10)
+        itemsArray.append(item12)
+        itemsArray.append(item11)
+        itemsArray.append(item13)
+        itemsArray.append(item14)
+        itemsArray.append(item15)
+        itemsArray.append(item16)
+        itemsArray.append(item17)
+        itemsArray.append(item18)
+        itemsArray.append(item19)
+        itemsArray.append(item20)
+        itemsArray.append(item21)
+
+
+        if let items = defaults.array(forKey: "ToDoListKey") as? [ItemModel] {
         itemsArray = items
         }
         // Uncomment the following line to preserve selection between presentations
@@ -32,12 +77,11 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
         let alertController = UIAlertController(title: "Add Todoey Item", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             self.itemsArray.append(self.newItem)
-            self.defaults.setValue(self.itemsArray, forKey: "ToDoListKey")
+            self.defaults.set(self.itemsArray, forKey: "ToDoListKey")
             self.tableView.reloadData()
         }
         alertController.addAction(action)
         alertController.addTextField { (textField) in
-            self.newItem = textField.text!
             textField.placeholder = "Enter New Item"
             textField.delegate = self
         }
@@ -45,8 +89,9 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        newItem = textField.text!
+        self.newItem = ItemModel(name: textField.text!, checked: false)
     }
+    
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -61,7 +106,9 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "toDoCell", for: indexPath)
-        cell.textLabel?.text = itemsArray[indexPath.row]
+        cell.textLabel?.text = itemsArray[indexPath.row].itemName
+        
+        (itemsArray[indexPath.row].done) ? (cell.accessoryType = .checkmark) : (cell.accessoryType = .none)
         // Configure the cell...
 
         return cell
@@ -69,13 +116,8 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     
     //MARK: - TableViewDelegates
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(itemsArray[indexPath.row])
-        tableView.deselectRow(at: indexPath, animated: true)
-        if (tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark) {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
+        itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
+        tableView.reloadData()
     }
     
     /*
