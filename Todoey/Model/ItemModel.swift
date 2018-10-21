@@ -7,7 +7,7 @@
 //
 
 import Foundation
-class ItemModel: NSObject {
+class ItemModel: NSObject,Encodable, Decodable {
     var itemName =  String()
     var done : Bool = false
     

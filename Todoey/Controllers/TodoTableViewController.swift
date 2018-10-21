@@ -13,71 +13,22 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     var itemsArray = [ItemModel]()
     var newItem = ItemModel()
     
-    var defaults = UserDefaults.standard
     
-
+    let docDire = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+    var dataFilePath = URL(string: "")
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let item1 = ItemModel(name: "First", checked: false)
-        let item2 = ItemModel(name: "First", checked: false)
-        let item3 = ItemModel(name: "First", checked: false)
-        let item4 = ItemModel(name: "First", checked: false)
-        let item5 = ItemModel(name: "First", checked: false)
-        let item6 = ItemModel(name: "First", checked: false)
-        let item7 = ItemModel(name: "First", checked: false)
-        let item8 = ItemModel(name: "First", checked: false)
-        let item9 = ItemModel(name: "First", checked: false)
-        let item10 = ItemModel(name: "First", checked: false)
-        let item11 = ItemModel(name: "First", checked: false)
-        let item12 = ItemModel(name: "First", checked: false)
-        let item13 = ItemModel(name: "First", checked: false)
-        let item14 = ItemModel(name: "First", checked: false)
-        let item15 = ItemModel(name: "First", checked: false)
-        let item16 = ItemModel(name: "First", checked: false)
-        let item17 = ItemModel(name: "First", checked: false)
-        let item18 = ItemModel(name: "First", checked: false)
-        let item19 = ItemModel(name: "First", checked: false)
-        let item20 = ItemModel(name: "First", checked: false)
-        let item21 = ItemModel(name: "First", checked: false)
-        itemsArray.append(item1)
-        itemsArray.append(item2)
-        itemsArray.append(item3)
-        itemsArray.append(item4)
-        itemsArray.append(item5)
-        itemsArray.append(item6)
-        itemsArray.append(item7)
-        itemsArray.append(item8)
-        itemsArray.append(item9)
-        itemsArray.append(item10)
-        itemsArray.append(item12)
-        itemsArray.append(item11)
-        itemsArray.append(item13)
-        itemsArray.append(item14)
-        itemsArray.append(item15)
-        itemsArray.append(item16)
-        itemsArray.append(item17)
-        itemsArray.append(item18)
-        itemsArray.append(item19)
-        itemsArray.append(item20)
-        itemsArray.append(item21)
-
-
-        if let items = defaults.array(forKey: "ToDoListKey") as? [ItemModel] {
-        itemsArray = items
-        }
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        dataFilePath = docDire?.appendingPathComponent("Items.plist")
+        loadItems()
+        
     }
 
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alertController = UIAlertController(title: "Add Todoey Item", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             self.itemsArray.append(self.newItem)
-            self.defaults.set(self.itemsArray, forKey: "ToDoListKey")
             self.tableView.reloadData()
         }
         alertController.addAction(action)
@@ -117,52 +68,37 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     //MARK: - TableViewDelegates
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
+        writeDataToFile()
         tableView.reloadData()
     }
     
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
+    //MARK:- Private methods
+    
+    func writeDataToFile() {
+        let encoder = PropertyListEncoder()
+        do {
+            let data = try encoder.encode(self.itemsArray)
+            try data.write(to: self.dataFilePath!)
+            print(self.dataFilePath)
+            
+        } catch {
+            print("Error while encoding \(error.localizedDescription)")
+        }
     }
-    */
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+    
+    func loadItems() {
+        let decoder = PropertyListDecoder()
+        var data = Data()
+        do {
+        data =  try Data(contentsOf: dataFilePath!)
+        }
+        catch {
+            print("Error while decoding ,\(error.localizedDescription)")
+        }
+        do {
+           self.itemsArray = try decoder.decode([ItemModel].self, from: data)
+        } catch {
+            print("Error while decoding ,\(error.localizedDescription)")
+        }
     }
-    */
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
 }
