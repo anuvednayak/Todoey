@@ -7,20 +7,22 @@
 //
 
 import UIKit
+import CoreData
 
-class TodoTableViewController: UITableViewController,UITextFieldDelegate {
+class TodoTableViewController: UITableViewController,UITextFieldDelegate,UISearchBarDelegate {
     
-    var itemsArray = [ItemModel]()
-    var newItem = ItemModel()
+    var itemsArray = [Item]()
+    var newItem : Item?
     
+    let context = ((UIApplication.shared.delegate) as! AppDelegate).persistentContainer.viewContext
+
     
-    let docDire = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-    var dataFilePath = URL(string: "")
+    @IBOutlet var searchBar: UITableView!
     
+    //MARK:- View lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        dataFilePath = docDire?.appendingPathComponent("Items.plist")
+        searchBar.delegate = self
         loadItems()
         
     }
@@ -28,7 +30,7 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alertController = UIAlertController(title: "Add Todoey Item", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
-            self.itemsArray.append(self.newItem)
+            self.itemsArray.append(self.newItem!)
             self.tableView.reloadData()
         }
         alertController.addAction(action)
@@ -40,7 +42,9 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        self.newItem = ItemModel(name: textField.text!, checked: false)
+        self.newItem = Item(context: context)
+        self.newItem?.title = textField.text!
+        self.newItem?.done = false
     }
     
     // MARK: - Table view data source
@@ -57,7 +61,7 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "toDoCell", for: indexPath)
-        cell.textLabel?.text = itemsArray[indexPath.row].itemName
+        cell.textLabel?.text = itemsArray[indexPath.row].title
         
         (itemsArray[indexPath.row].done) ? (cell.accessoryType = .checkmark) : (cell.accessoryType = .none)
         // Configure the cell...
@@ -68,37 +72,45 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate {
     //MARK: - TableViewDelegates
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
-        writeDataToFile()
+        saveData()
         tableView.reloadData()
     }
     
+    //MARK:- SearchBar Delegates
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let req : NSFetchRequest<Item> = Item.fetchRequest()
+        let predicat = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        req.predicate = predicat
+        
+        let sortDescrp = NSSortDescriptor(key: "title", ascending: true)
+        req.sortDescriptors = [sortDescrp]
+        
+        loadItems(with: req)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if (searchText.count == 0) {
+            loadItems()
+        }
+    }
     //MARK:- Private methods
     
-    func writeDataToFile() {
-        let encoder = PropertyListEncoder()
+    func saveData() {
         do {
-            let data = try encoder.encode(self.itemsArray)
-            try data.write(to: self.dataFilePath!)
-            print(self.dataFilePath)
-            
+           try context.save()
         } catch {
-            print("Error while encoding \(error.localizedDescription)")
+            print("Error while saving \(error.localizedDescription)")
         }
     }
     
-    func loadItems() {
-        let decoder = PropertyListDecoder()
-        var data = Data()
+    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest()) {
         do {
-        data =  try Data(contentsOf: dataFilePath!)
+            itemsArray = try context.fetch(request)
         }
         catch {
-            print("Error while decoding ,\(error.localizedDescription)")
+            print("Error while fetching ,\(error.localizedDescription)")
         }
-        do {
-           self.itemsArray = try decoder.decode([ItemModel].self, from: data)
-        } catch {
-            print("Error while decoding ,\(error.localizedDescription)")
-        }
+        tableView.reloadData()
+        
     }
 }
