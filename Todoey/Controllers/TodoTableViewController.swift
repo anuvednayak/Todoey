@@ -14,6 +14,9 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate,UISearc
     var itemsArray = [Item]()
     var newItem : Item?
     
+    var selectedCategory: Category?
+
+    
     let context = ((UIApplication.shared.delegate) as! AppDelegate).persistentContainer.viewContext
 
     
@@ -23,7 +26,10 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate,UISearc
     override func viewDidLoad() {
         super.viewDidLoad()
         searchBar.delegate = self
-        loadItems()
+        let req:NSFetchRequest<Item> = Item.fetchRequest()
+        let predicate = NSPredicate(format: "parentCategory.name MATCHES %@", (selectedCategory?.name)!)
+        req.predicate = predicate
+        loadItems(with: req)
         
     }
 
@@ -45,6 +51,8 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate,UISearc
         self.newItem = Item(context: context)
         self.newItem?.title = textField.text!
         self.newItem?.done = false
+        self.newItem?.parentCategory = selectedCategory
+        saveData()
     }
     
     // MARK: - Table view data source
@@ -79,7 +87,7 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate,UISearc
     //MARK:- SearchBar Delegates
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let req : NSFetchRequest<Item> = Item.fetchRequest()
-        let predicat = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicat = NSPredicate(format: "title CONTAINS[cd] %@ AND parentCategory.name MATCHES %@", searchBar.text!,(selectedCategory?.name)!)
         req.predicate = predicat
         
         let sortDescrp = NSSortDescriptor(key: "title", ascending: true)
@@ -90,7 +98,10 @@ class TodoTableViewController: UITableViewController,UITextFieldDelegate,UISearc
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if (searchText.count == 0) {
-            loadItems()
+            let req:NSFetchRequest<Item> = Item.fetchRequest()
+            let predicate = NSPredicate(format: "parentCategory.name MATCHES %@", (selectedCategory?.name)!)
+            req.predicate = predicate
+            loadItems(with: req)
         }
     }
     //MARK:- Private methods
